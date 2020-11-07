@@ -22,4 +22,4 @@ then
 	echo "\n\t Utility 'nmap' is not installed.  Unable to perform requested action.  Bye!\n" ; exit 1
 fi
 
-nmap -vv T5 -p1-65535 --script "default and safe" `hostname -I`
+nmap -vv -T5 -p1-65535 --script "default and safe" `hostname -I`
