@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###     $Id: Devices__UnmountAllPartitions.sh,v 1.2 2020/11/07 19:01:17 root Exp $
+###     $Id: Devices__UnmountAllPartitions.sh,v 1.3 2020/11/14 02:53:06 root Exp $
 ###
 ###     Script to unmount all partitions that detected by the system, with exception of that which is not the current ROOT filesystem.
 ###
@@ -33,36 +33,33 @@ INPUT=0
 noroot=0
 loginName=`basename ${HOME} `
 
-
 while [ $# -gt 0 ]
 do
-	if [ "$1" = "--usb" ]
-	then USB=1 ; shift
-	fi
-
-	if [ "$1" = "--debug" ]
-	then DBG=1 ; shift
-	fi
-
-	if [ "$1" = "--verbose" ]
-	then VERB=1 ; shift
-	fi
-
-	if [ "$1" = "--input" ]
-	then INPUT=1 ; shift
-	fi
-	
-	if [ "$1" = "--data" ]
-	then DATA=1 ; SWAP=0 ; shift ; sString="_F"
-	fi
-	
-	if [ "$1" = "--swap" ]
-	then SWAP=1 ; DATA=0 ; shift ; sString="_S"
-	fi
-
-	if [ "$1" = "--noroot" ]
-	then DATA=1 ; SWAP=0 ; shift ; sString="_F" ; noroot=1
-	fi
+	case $1 in
+		--debug )	
+			DBG=1 ; shift
+			;;
+		--verbose" )
+			VERB=1 ; shift
+			;;
+		--input" )
+			INPUT=1 ; shift
+			;;
+		--data" )
+			DATA=1 ; SWAP=0 ; shift ; sString="_F"
+			;;
+		--swap" )
+			SWAP=1 ; DATA=0 ; shift ; sString="_S"
+			;;
+		--usb" )
+			USB=1 ; shift
+			;;
+		--noroot" )
+			DATA=1 ; SWAP=0 ; shift ; sString="_F" ; noroot=1
+			;;
+		* )	echo "\n\t Invalid parameter used on command line.  Only options allowed: [ --debug | --verbose | --input | --data | --swap ]\n" ; exit 1
+			;;
+	esac
 done
 
 # Format of report from Devices__ReportDiskParts.sh
@@ -79,12 +76,12 @@ done
 #/dev/sda12   ext4     DB001_F5   17a1582c-7dd2-4ea4-bc69-db6d2317ff92   Mounted       /DB001_F5
 #/dev/sda13   ext4     DB001_F6   f255b2a2-8549-451f-9b97-f6ebe66c8d3a   Mounted       /DB001_F6
 #/dev/sda14   ext4     DB001_F7   58f622cd-2841-4967-8def-86dd38192769   Mounted       /DB001_F7
-#/dev/sdb1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   Not_Mounted   /media/ericthered/DB002_F1
+#/dev/sdb1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   Not_Mounted   /site/DB002_F1
 #/dev/sdb2    swap     DB002_S1   7dd23169-56c6-4c2c-afbb-9e75d4de7652   Enabled       [SWAP]
-#/dev/sdb3    ext4     DB002_F2   7e10c52e-fe20-497b-beab-f67e75cf7d83   Not_Mounted   /media/ericthered/DB002_F2
-#/dev/sdc1    ext4     DB003_F1   12d9cfcc-8da0-4ba6-a7f8-cd08870c2890   Not_Mounted   /media/ericthered/DB003_F1
+#/dev/sdb3    ext4     DB002_F2   7e10c52e-fe20-497b-beab-f67e75cf7d83   Not_Mounted   /site/DB002_F2
+#/dev/sdc1    ext4     DB003_F1   12d9cfcc-8da0-4ba6-a7f8-cd08870c2890   Not_Mounted   /site/DB003_F1
 #/dev/sdc2    swap     DB003_S1   48245d59-d265-459d-860c-d0caaf616fa7   Enabled       [SWAP]
-#/dev/sdd1    ext4     DB004_F1   35e8b30a-bd60-4648-a101-e502f866bc05   Not_Mounted   /media/ericthered/DB004_F1
+#/dev/sdd1    ext4     DB004_F1   35e8b30a-bd60-4648-a101-e502f866bc05   Not_Mounted   /site/DB004_F1
 #/dev/sdd2    swap     DB004_S1   baaf58d0-df6a-4967-89ea-739b34840530   Enabled       [SWAP]
 
 Devices__ReportDiskParts.sh >${TMP}.parts 2>>/dev/null
