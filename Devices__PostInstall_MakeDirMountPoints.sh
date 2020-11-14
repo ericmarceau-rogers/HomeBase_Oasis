@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###     $Id: Devices__PostInstall_MakeDirMountPoints.sh,v 1.2 2020/10/19 17:37:37 root Exp $
+###     $Id: Devices__PostInstall_MakeDirMountPoints.sh,v 1.3 2020/11/14 03:56:27 root Exp $
 ###
 ###     Script to create mount points for all devices detected by the system. Expectation that all partitions have LABELS according to convention.
 ###
@@ -58,7 +58,7 @@ ${COM_repParts} >${classParts}
 
 ###	Report Format:
 #/dev/sda14   ext4     DB001_F7   58f622cd-2841-4967-8def-86dd38192769   Mounted       /DB001_F7
-#/dev/sdb1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   Not_Mounted   /media/ericthered/DB002_F1
+#/dev/sdb1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   Not_Mounted   /site/DB002_F1
 #/dev/sdb2    swap     DB002_S1   7dd23169-56c6-4c2c-afbb-9e75d4de7652   Enabled       [SWAP]
 
 if [ ${DBG} -eq 1 ] ; then echo "\n ======== Report from '${COM_repParts}' :" ; cat ${classParts} ; fi
