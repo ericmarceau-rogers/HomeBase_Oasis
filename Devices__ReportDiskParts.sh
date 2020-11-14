@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###	$Id: Devices__ReportDiskParts.sh,v 1.4 2020/11/07 18:52:07 root Exp $
+###	$Id: Devices__ReportDiskParts.sh,v 1.5 2020/11/14 03:04:08 root Exp $
 ###
 ###	Script to report all partitions that detected by the system.
 ###
@@ -24,18 +24,7 @@ done
 
 if [ -z "${MROOT}" ]
 then
-	thisUser=`whoami`
-	realUser="${SUDO_USER}"
-
-	if [ ${thisUser} = ${realUser} ]
-	then
-        	loginName=`basename ${HOME} `
-	else
-        	loginName="${realUser}"
-	fi
-
-	thisUser="${loginName}"
-	MROOT="/media/${thisUser}" ; export MROOT
+	MROOT="/site" ; export MROOT
 fi
 
 pROOT=`df / | grep '/dev/' | awk '{ print $1 }' `
@@ -103,13 +92,13 @@ lsblk -l -p -o NAME,FSTYPE,PARTLABEL,UUID,SIZE,MOUNTPOINT | grep -v 'GRUB' | awk
 
 ## WD 4 TB My Book
 #----------------------------------------------------------------------------------------------------------------------
-#/dev/sdb1 on /media/ericthered/My Book type exfat (rw,nosuid,nodev,relatime,uid=1000,gid=1000,fmask=0022,dmask=0022,iocharset=utf8,namecase=0,errors=remount-ro,uhelper=udisks2)
+#/dev/sdb1 on /site/My Book type exfat (rw,nosuid,nodev,relatime,uid=1000,gid=1000,fmask=0022,dmask=0022,iocharset=utf8,namecase=0,errors=remount-ro,uhelper=udisks2)
 ###	1,4,9,7,5,18
 #----------------------------------------------------------------------------------------------------------------------
 ###	/dev/sdb1    exfat    My         Book                                   Not_Mounted   /My
-#/dev/sdb1  /dev/sdb1  /dev/sdb1    8:17     3.7T   3.7T exfat        6M     0% /media/ericthered/My Book     My Book  40FA-E56B                            fc843c51-1aec-4aab-8676-9043c9e59d0d atari  ebd0a0a2-b9e5-4433-87c0-68b6b72699c7 My Book   4c1ee663-135c-4809-a61e-f38ec52d80a7           128  0  0       1                                                  3.7T         root  disk  brw-rw----         0   4096      0    4096     512    1 mq-deadline       2 part        0        4K       4G         0    0B                       1 /dev/sdb                   block:scsi:usb:pci               none
+#/dev/sdb1  /dev/sdb1  /dev/sdb1    8:17     3.7T   3.7T exfat        6M     0% /site/My Book     My Book  40FA-E56B                            fc843c51-1aec-4aab-8676-9043c9e59d0d atari  ebd0a0a2-b9e5-4433-87c0-68b6b72699c7 My Book   4c1ee663-135c-4809-a61e-f38ec52d80a7           128  0  0       1                                                  3.7T         root  disk  brw-rw----         0   4096      0    4096     512    1 mq-deadline       2 part        0        4K       4G         0    0B                       1 /dev/sdb                   block:scsi:usb:pci               none
 #----------------------------------------------------------------------------------------------------------------------
-###	/dev/sde3    ext4     DB002_F1   1b4157be-79cd-472b-96d9-a4cabacaffe1   Not_Mounted   /media/ericthered/DB002_F1
+###	/dev/sde3    ext4     DB002_F1   1b4157be-79cd-472b-96d9-a4cabacaffe1   Not_Mounted   /site/DB002_F1
 #/dev/sde3  /dev/sde3  /dev/sde3    8:67                 ext4                                                 DB002_F1 1b4157be-79cd-472b-96d9-a4cabacaffe1 9a3649a5-cbbb-4f1b-ae0b-f3c0d9cdec21 dos    c12a7328-f81f-11d2-ba4b-00a0c93ec93b DB002_F1  a9b2eda8-ec21-4999-b1f6-eab36ce3bf75           128  0  0       0                                                279.4G         root  disk  brw-rw----         0   4096      0    4096     512    1 mq-deadline      64 part        0        0B       0B         0    0B 0x50014ee263b2c636    1 /dev/sde                   block:scsi:pci                   none
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -135,7 +124,7 @@ else
 	if [   -t 1 ] ; then echo "\n\t ALL recognized DISK partitions reported in format required to update '/etc/fstab':\n"     ; fi
 	#if [ ! -t 1 ] ; then echo "\n\t ALL recognized DISK partitions reported in format required to update '/etc/fstab':\n" >&2 ; fi
 
-	#/dev/sdd1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   300G          /media/ericthered/DB002_F1
+	#/dev/sdd1    ext4     DB002_F1   0aa50783-954b-4024-99c0-77a2a54a05c2   300G          /site/DB002_F1
 	#UUID=f56b6086-229d-4c17-8a5b-e68de1a4e73d	/	ext4	errors=remount-ro	0	1
 	#UUID=7e9a663e-ff1d-4730-8544-c37519056b6f	/DB001_F2	ext4	nosuid,nodev,nofail,errors=remount-ro	0	2 
 	#UUID=c37e53cd-5882-401c-8ba3-172531a082e9	none	swap	sw,pri=3	0	0
@@ -154,7 +143,7 @@ else
 				seq=0 ;
 			}else{
 				#perms="nosuid,nodev,nofail,defaults" ;
-				perms="nofail,defaults" ;
+				perms="defaults,nofail" ;
 				if ( $1 ~ dROOT ) { seq=2 ; }else{ seq=3 ; } ;
 			} ;
 			printf("# %-12s %-8s %-10s %-38s %-13s %s\n", $1, $2, $3, $4, $5, $6 ) ;
@@ -170,7 +159,7 @@ else
 				seq=0 ;
 			}else{
 				#perms="nosuid,nodev,nofail,defaults" ;
-				perms="nofail,defaults" ;
+				perms="defaults,nofail" ;
 				if ( $1 ~ dROOT ) { seq=2 ; }else{ seq=3 ; } ;
 			} ;
 			#printf("# %-12s %-8s %-10s %-38s %-13s %s/%s\n", $1, $2, $3, $4, $5, othrPath, $3 ) ; 
@@ -200,4 +189,3 @@ rm -f ${TMP}.*
 exit 0
 exit 0
 exit 0
-
