@@ -1,6 +1,6 @@
 #!/bin/sh
 
-###	$Id: OS_Admin__CaptureBootCriticalFiles_Mirror.sh,v 1.2 2020/10/08 01:07:27 root Exp root $
+###	$Id: OS_Admin__CaptureBootCriticalFiles_Mirror.sh,v 1.3 2020/11/14 03:47:30 root Exp $
 ###	Script to create mirrored failsafe copy of key directories or files on partition other than root.
 
 ### PROD
@@ -36,14 +36,12 @@ then
 fi
 
 thisHost=`hostname`
-thisUser=`basename ${HOME}`
 
-if [ "${thisUser}" = "root" ]
+if [ -n "${SUDO_USER}" ]
 then
-	if [ -n "${SUDO_USER}" ]
-	then
-		thisUser="${SUDO_USER}"
-	fi
+	thisUser="${SUDO_USER}"
+else
+	thisUser=`grep -v nologin /etc/passwd | grep -v '/false' | grep -v '/sync' | grep -v '/root' | grep '/home' | head -1 | cut -f1 -d\: `
 fi
 
 fileList="home/${thisUser}/.bash_logout
@@ -79,7 +77,7 @@ case ${thisHost} in
 		failsafeBackup="/DB001_F2/LO_FailSafe/${thisHost}"
 		;;
 	OasisMega2 | OasisMidi | OasisMini )
-		failsafeBackup="/media/${thisUser}/DB001_F2/LO_FailSafe/${thisHost}"
+		failsafeBackup="${MROOT}/DB001_F2/LO_FailSafe/${thisHost}"
 		;;
 	* )
 		;;
