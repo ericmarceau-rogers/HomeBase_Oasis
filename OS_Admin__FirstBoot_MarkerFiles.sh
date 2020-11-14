@@ -3,6 +3,8 @@
 ###	$Id: $
 ###	Description TBD
 
+echo "\n\t Logic for in this script needs to be revisited and confirmed before using.\n Bye!\n" ; exit 1
+
 MARKER_FILES="/etc/issue /etc/issue.net /etc/lsb-release /etc/os-release"
 
 if [ "$1" = "--force" ]
@@ -46,7 +48,7 @@ else
 		esac
 	done
 
-	FilesFROM="/media/ericthered/DB001_F1"
+	FilesFROM="${MROOT}/DB001_F1"
 fi
 
 #############################################################################################
@@ -63,8 +65,8 @@ ShowFiles()
 		if [ -n "${COMPARE}" ]
 		then
 			echo "\t =================================================================================="
-			echo "\t ${media}/${COMPARE}${MarkerFile}:\n"
-			cat ${media}/${COMPARE}${MarkerFile}
+			echo "\t ${MROOT}/${COMPARE}${MarkerFile}:\n"
+			cat ${MROOT}/${COMPARE}${MarkerFile}
 		fi
 
 	done
