@@ -1,6 +1,6 @@
 #!/bin/sh
 
-###	$Id: $
+###	$Id: HW_Admin__HostReport.sh,v 1.1 2020/11/14 03:08:32 root Exp $
 ###	Script to report on various aspects of the current host OS, GUI, hardware, memory, storage, graphics.  
 
 OPTIONS="-y 255 -c 0"
@@ -52,11 +52,11 @@ echo "\n\n######################################################################
 
 COM="inxi ${OPTIONS} -i -xxx 2>&1 | tail --lines=+2"
 echo "\n----------------------------------------------------------------------\n COMMAND: '${COM}'" ; eval ${COM}
-#           IF: enp2s0 state: up speed: 1000 Mbps duplex: full mac: ...
+#           IF: enp2s0 state: up speed: 1000 Mbps duplex: full mac: 00:26:18:8a:b5:7a
 #           WAN IP: 174.115.236.50
-#           IF: enp2s0 ip-v4: ... ip-v6-link: ...
-#           ip-v6-global: ...
-#           ip-v6-global: ...
+#           IF: enp2s0 ip-v4: 192.168.0.10 ip-v6-link: fe80::226:18ff:fe8a:b57a
+#           ip-v6-global: fd00:8494:8c30:fac2:226:18ff:fe8a:b57a/64
+#           ip-v6-global: 2607:fea8:c2a0:63:226:18ff:fe8a:b57a/64
 
 }	#report_NETWORK()
 
@@ -130,7 +130,26 @@ echo "\n----------------------------------------------------------------------\n
 
 COM="inxi ${OPTIONS} -plu -xxx"
 echo "\n----------------------------------------------------------------------\n COMMAND: '${COM}'" ; ${COM}
-#           ID-3: /media/ericthered/DB004_F1 size: 108G used: 8.3G (9%) fs: ext4 dev: /dev/sdd1 label: DB004_F1 uuid: 5f3757ca-7b47-407b-b0e9-6c5ae68106e3
+#Partition: ID-1: / size: 288G used: 54G (20%) fs: ext4 dev: /dev/sda1 label: DB001_F1 uuid: f56b6086-229d-4c17-8a5b-e68de1a4e73d
+#           ID-2: /site/DB003_F1 size: 454G used: 21G (5%) fs: ext4 dev: /dev/sdb1 label: DB003_F1 uuid: 12d9cfcc-8da0-4ba6-a7f8-cd08870c2890
+#           ID-3: /site/DB004_F1 size: 108G used: 8.3G (9%) fs: ext4 dev: /dev/sdd1 label: DB004_F1 uuid: 5f3757ca-7b47-407b-b0e9-6c5ae68106e3
+#           ID-4: /site/DB002_F1 size: 295G used: 6.9G (3%) fs: ext4 dev: /dev/sdc1 label: DB002_F1 uuid: 0aa50783-954b-4024-99c0-77a2a54a05c2
+#           ID-5: /site/DB002_F2 size: 1.5T used: 985G (68%) fs: ext4 dev: /dev/sdc3 label: DB002_F2 uuid: 7e10c52e-fe20-497b-beab-f67e75cf7d83
+#           ID-6: /DB001_F2 size: 289G used: 73G (27%) fs: ext4 dev: /dev/sda7 label: DB001_F2 uuid: 7e9a663e-ff1d-4730-8544-c37519056b6f
+#           ID-7: /DB001_F3 size: 289G used: 237G (87%) fs: ext4 dev: /dev/sda8 label: DB001_F3 uuid: 4f7d4192-b136-4a94-b06b-736f76155816
+#           ID-8: /DB001_F4 size: 289G used: 242G (89%) fs: ext4 dev: /dev/sda9 label: DB001_F4 uuid: 7f37ffd4-779a-46c6-b440-f384fb75eb98
+#           ID-9: /DB001_F5 size: 193G used: 30G (17%) fs: ext4 dev: /dev/sda12 label: DB001_F5 uuid: 17a1582c-7dd2-4ea4-bc69-db6d2317ff92
+#           ID-10: /DB001_F6 size: 193G used: 161G (88%) fs: ext4 dev: /dev/sda13 label: DB001_F6 uuid: f255b2a2-8549-451f-9b97-f6ebe66c8d3a
+#           ID-11: /DB001_F7 size: 289G used: 18G (7%) fs: ext4 dev: /dev/sda14 label: DB001_F7 uuid: 58f622cd-2841-4967-8def-86dd38192769
+#           ID-12: swap-1 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda5 label: DB001_S3 uuid: c16e9d3b-0ea5-4c2b-808b-9962509f04dd
+#           ID-13: swap-2 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda6 label: DB001_S4 uuid: f9441354-ee42-4cef-912e-82e10a3d18af
+#           ID-14: swap-3 size: 4.29GB used: 0.00GB (0%) fs: swap dev: /dev/sdc2 label: DB002_S1 uuid: 7dd23169-56c6-4c2c-afbb-9e75d4de7652
+#           ID-15: swap-4 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda4 label: DB001_S2 uuid: 227afe2c-ee1a-4065-bc9d-24040ea01849
+#           ID-16: swap-5 size: 2.15GB used: 0.00GB (0%) fs: swap dev: /dev/sdd2 label: DB004_S1 uuid: a7de6699-4a57-4ed7-b3df-a1641b1c6ff9
+#           ID-17: swap-6 size: 4.29GB used: 0.00GB (0%) fs: swap dev: /dev/sdb2 label: DB003_S1 uuid: 48245d59-d265-459d-860c-d0caaf616fa7
+#           ID-18: swap-7 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda3 label: DB001_S1 uuid: c37e53cd-5882-401c-8ba3-172531a082e9
+#           ID-19: swap-8 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda10 label: DB001_S5 uuid: 3b9a2c7a-67d4-4de7-ae66-214937dc47f4
+#           ID-20: swap-9 size: 1.04GB used: 0.00GB (0%) fs: swap dev: /dev/sda11 label: DB001_S6 uuid: 78b04c8c-8ace-4b46-817d-7059aa1668b7
 
 }	#report_HARDWARE()
 
