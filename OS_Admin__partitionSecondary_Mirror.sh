@@ -6,7 +6,7 @@ procROOT="/DB001_F2"
 ############################################################################################################
 ############################################################################################################
 #
-#	$Id: OS_Admin__partitionSecondary_Mirror.sh,v 1.10 2019/09/02 04:12:59 root Exp $
+#	$Id: OS_Admin__partitionSecondary_Mirror.sh,v 1.11 2020/11/14 04:55:30 root Exp $
 #
 ############################################################################################################
 ############################################################################################################
@@ -209,6 +209,35 @@ purgeDefunctFils(){
 		echo "\t No files identified for purging ..."
 	fi
 }
+
+checkDir(){
+##############################################################################
+##############################################################################
+###
+###	Ensure that the top level directories exist and that they are each on their own physical partition.
+###
+	echo "\t PathMaster  = ${PathMaster}"
+	echo "\t PathMirror  = ${PathMirror}"
+
+	for dirA in ${PathMaster} ${PathMirror}
+	do
+		if [ ! -d ${dirA} ]
+		then
+			echo "\n\t ${dirA} is not mounted!\n\t Task ABANDONNED!\n"
+			exit 1
+		fi
+	done
+
+	devMaster=`df ${PathMaster} | grep '/dev' | awk '{ print $1 }' | cut -c1-8 `
+	devMirror=`df ${PathMirror} | grep '/dev' | awk '{ print $1 }' | cut -c1-8 `
+
+	if [ "${devMirror}" = "${devMaster}" ]
+	then
+		echo "\n\t Device for Mirror was not properly mounted.  Same device (${PathMirror}) as Master (${PathMaster}).\n\t Task ABANDONNED!\n"
+		exit 1
+	fi
+}
+
 ##############################################################################
 ##############################################################################
 ###
@@ -240,60 +269,21 @@ echo "\n\t N.B.  OasisMega1  is 'Master Host' ...\n\t\t ... and OasisMega2 is 'M
 ###	Section 1:	Host-specific settings
 ###
 
-checkDir()
-{
-	#echo PathMaster   = ${PathMaster}
-	#echo PathMirror  = ${PathMirror}
-
-	for dirA in ${PathMaster} ${PathMirror}
-	do
-		if [ ! -d ${dirA} ]
-		then
-			echo "\n\t ${dirA} is not mounted!\n\t Task ABANDONNED!\n"
-			exit 1
-		fi
-	done
-}
-
 STRT=`pwd`
-Master=OasisMega1
-Mirror=OasisMega2
+#Master=OasisMega1
+#Mirror=OasisMega2
 
 case `hostname` in
 	OasisMega1 )
 		PathMaster="/"
-		PathMirror="/media/ericthered/DB002_F1/"
-
-		checkDir
-
-		test1=`df -h ${PathMaster} | grep '/dev' | awk '{ print $1 }' `
-		test2=`df -h ${PathMirror} | grep '/dev' | awk '{ print $1 }' `
-
-		if [ "${test1}" = "${test2}" ]
-		then
-			echo "\n\t Mirror drive not mounted at '${PathMirror}'.  Abandoning for Administrator correction of required partition.\n"
-			exit 1
-		fi
 		;;
-	OasisMega2 )
+	OasisBackup | OasisMega2 )
 		# echo "\n  This tool has not been fully adapted for host `hostname`.\n" ; exit
-		PathMaster="/media/ericthered/DB001_F2/"
-		PathMirror="/"
-
-		checkDir
-
-		test1=`df -h ${PathMaster} | grep '/dev' | awk '{ print $1 }' `
-		test2=`df -h ${PathMirror} | grep '/dev' | awk '{ print $1 }' `
-
-		if [ "${test1}" = "${test2}" ]
-		then
-			echo "\n\t Master drive not mounted at '${PathMaster}'.  Abandoning for Administrator correction of required partition.\n"
-			exit 1
-		fi
+		PathMaster="${MROOT}/"
 		;;
 	* )
 		echo "\n\t This script is not intended for use on this host.\n"
-		exit 0
+		exit 1
 		;;
 esac
 
@@ -342,6 +332,60 @@ then
 else
     for dirC in   `echo ${doList}`
     do
+	###################################################################################################################################
+	# NEW LOGIC
+	###################################################################################################################################
+
+	masterPart=`echo ${dirC} | cut -c8 ` 			#dirC=DB001_F${masterPart}
+
+	case ${masterPart} in
+		1 )	mirrorPart=8 ;;
+		* )	mirrorPart=${masterPart} ;;
+	esac
+
+	case `hostname` in
+		OasisMega1 )
+			PathMaster="/"
+			PathMirror="${MROOT}/DB005_F${mirrorPart}/"
+
+			checkDir
+
+			test1=`df -h ${PathMaster} | grep '/dev' | awk '{ print $1 }' `
+			test2=`df -h ${PathMirror} | grep '/dev' | awk '{ print $1 }' `
+
+			if [ "${test1}" = "${test2}" ]
+			then
+				echo "\n\t Mirror drive not mounted at '${PathMirror}'.  Abandoning for Administrator correction of required partition.\n"
+				exit 1
+			fi
+			;;
+		OasisBackup | OasisMega2 )
+			# echo "\n  This tool has not been fully adapted for host `hostname`.\n" ; exit
+			PathMaster="${MROOT}/"
+
+			case `hostname` in
+				OasisMega2 )  PathMirror="/DB002_${mirrorPart}/"
+					;;
+				OasisBackup ) PathMirror="/DB005_${mirrorPart}/"
+					;;
+			esac
+
+			checkDir
+
+			test1=`df -h ${PathMaster} | grep '/dev' | awk '{ print $1 }' `
+			test2=`df -h ${PathMirror} | grep '/dev' | awk '{ print $1 }' `
+
+			if [ "${test1}" = "${test2}" ]
+			then
+				echo "\n\t Master drive not mounted at '${PathMaster}'.  Abandoning for Administrator correction of required partition.\n"
+				exit 1
+			fi
+			;;
+	esac
+
+	###################################################################################################################################
+	###################################################################################################################################
+
 
 	if [ \( -n "${FirstPart}" \) -a \( "${dirC}" != "${FirstPart}" \) ]
 	then 
