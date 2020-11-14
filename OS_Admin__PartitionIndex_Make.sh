@@ -1,6 +1,6 @@
 #!/bin/sh
 
-###	$Id: $
+###	$Id: OS_Admin__PartitionIndex_Make.sh,v 1.1 2020/11/14 04:09:55 root Exp $
 ###	Script to create index of all files on chosen partitions, as well as separate file lists for each of a wide range of specific file types by suffix.
 
 PATH="/DB001_F2/OasisBin:/DB001_F2/OasisBin/bin:/home/root_TMP/bin:${PATH}" ; export PATH
@@ -11,21 +11,9 @@ TMPF=${TMPB}.$$
 
 rm -f ${TMPF}
 
-ThisTerm=`tty | sed s+/dev/++ `
-#echo ${ThisTerm}
-
-me=`who | grep ${ThisTerm} | awk '{ print $1 }' `
-#echo ${me}
+me=`who | grep '(:0)' | awk '{ print $1 }' `
 
 now=`date +%Y%m%d%H%M%S`
-
-
-## drvMount="/media/${me}"
-## cd ${drvMount}
-## 
-## for dev in `ls`
-## do
-##   DRIVE="${drvMount}/${dev}"
 
 doStat=0
 allTypes=0
@@ -55,10 +43,10 @@ case `hostname` in
 	OasisMini )
 		driveIndex=4
 		;;
+	OasisBackup )
+		echo "\n\t There are no plans to expand capabilities to perform indexing on these backup partitions.\n Bye!\n" ; exit 0
+		;;
 esac
-
-#PartitionList="DB001_F1 DB001_F2 DB001_F3 DB001_F4 DB001_F5 DB001_F6 DB001_F7"
-#PartitionList="DB001_F7"
 
 PartitionList=`cd / ; ls -d DB00${driveIndex}_F?`
 echo "\n\t Scanning Partitions:  "${PartitionList}" ...\n"
