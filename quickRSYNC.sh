@@ -1,13 +1,13 @@
 #!/bin/sh
 
-###	$Id: quickRSYNC.sh,v 1.1 2020/10/20 19:20:00 root Exp root $
+###	$Id: quickRSYNC.sh,v 1.2 2020/11/14 03:14:29 root Exp $
 ###	Simplified version of 'rsync' backup without the additional post-backup tasks that are performed by 'OS_Admin__partitionSecondary_Mirror.sh'.
 
 thisHost=`hostname`
 
 case ${thisHost} in
 	OasisMini | OasisMidi )
-		PathMaster="/media/ericthered/"
+		PathMaster="/site/"
 		;;
 	OasisMega1 )
 		PathMaster="/"
@@ -24,14 +24,12 @@ do
 
 	case ${masterPart} in
 		1 )	mirrorPart=8 ;;
-		2 )	mirrorPart=5 ;;
-		5 )	mirrorPart=2 ;;
 		* )	mirrorPart=${masterPart} ;;
 	esac
 
-	PathMirror="/media/ericthered/DB002_F${mirrorPart}/"
+	PathMirror="/site/DB005_F${mirrorPart}/"
 	STRT="${PathMirror}"
-	SWIP="/media/ericthered/"
+	SWIP="/site/"
 
 	MirrorBatch="${STRT}Z_backup.${dirC}.batch"
 
@@ -46,12 +44,15 @@ do
 			rm -f ${STRT}Z_backup.${dirC}.out ${STRT}Z_backup.${dirC}.err ${MirrorBatch}
 			rm -f ${SWIP}Z_backup.${dirC}.out ${SWIP}Z_backup.${dirC}.err
 
-			COM="rsync --one-file-system --recursive --links --perms --times --group --owner --devices --specials --verbose --out-format=\"%t|%i|%
-M|%b|%f|\" --update --checksum --delete-during --whole-file --human-readable --protect-args --ignore-errors --msgs2stderr ${showProgress} ./ ${PathMirror}${di
-rC}/ 2>${SWIP}Z_backup.${dirC}.err | tee ${SWIP}Z_backup.${dirC}.out"
+			if [ ! -d "${PathMaster}${dirC}" ]
+			then
+				mkdir "${PathMaster}${dirC}"
+				test $? -eq 0 && ( echo "\t NOTE:  Created directory '${PathMaster}${dirC}' ..." ; chown root:root "${PathMaster}${dirC}" )
+			fi
 
-			#echo "\n===================================================================================\n${COM}\n================================
-==========================================\n"
+			COM="rsync --one-file-system --recursive --links --perms --times --group --owner --devices --specials --verbose --out-format=\"%t|%i|%M|%b|%f|\" --update --checksum --delete-during --whole-file --human-readable --protect-args --ignore-errors --msgs2stderr ${showProgress} ./ ${PathMirror}${dirC}/ 2>${SWIP}Z_backup.${dirC}.err | tee ${SWIP}Z_backup.${dirC}.out"
+
+			#echo "\n===================================================================================\n${COM}\n==========================================================================\n"
 
                 	echo "\n `date` |rsync| Start ${dirC} ..." >&2
                 	cd ${PathMaster}${dirC}
@@ -62,8 +63,7 @@ rC}/ 2>${SWIP}Z_backup.${dirC}.err | tee ${SWIP}Z_backup.${dirC}.out"
 				mv ${SWIP}Z_backup.${dirC}.err ${STRT}Z_backup.${dirC}.err
 			" >${MirrorBatch}
 
-			echo "\n===================================================================================\n`cat ${MirrorBatch}`\n===================
-=======================================================\n"
+			echo "\n===================================================================================\n`cat ${MirrorBatch}`\n==========================================================================\n"
 
 			chmod 700 ${MirrorBatch}
 			nohup nice -17 ${MirrorBatch} &
