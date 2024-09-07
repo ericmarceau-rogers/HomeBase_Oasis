@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###	$Id: CODING__CheckRCSnames.sh,v 1.15 2020/09/14 22:16:13 root Exp root $
+###	$Id: CODING__CheckRCSnames.sh,v 1.16 2024/09/07 16:44:41 root Exp root $
 ###
 ###	Script to identify existence of matching RCS file for scripts and flag those which don't have one. The script also lists all historic versions.
 ###
@@ -11,6 +11,7 @@
 
 TMP=/tmp/`basename "$0" ".sh" `.tmp
 
+divider="##########################################"
 doCoder=0
 doSort=0
 noMatch=""
@@ -35,6 +36,83 @@ done
 
 if [ ${names} -eq 0 -a -t 1 -a ${mods} -eq 0 ] ; then  echo "" ; fi
 
+displayRcsDetails_A()
+{
+	#  [EDIT]         ###	$Id: CODING__CheckRCSnames.sh,v 1.16 2024/09/07 16:44:41 root Exp root $
+	#echo "123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+"
+	#echo "${dat}" | awk -v desc="${desc}" '{ printf("  [%s]         %s\n", desc, $0 ) ; }'
+	format="  [%s]          %-${max}s  %-4s  %s\n"
+	head -1 ${TMP}.oneitem | 
+	awk -v fmt="${format}" -v desc="${desc}" -v id=\$Id\: '{ 
+		str=index( $0, id) ;
+		rem=substr( $0, str) ;
+		#print rem ;
+		pos=index( rem,",v")+1 ;
+		L=length(rem) ;
+		s1=substr( rem, 1, pos) ; 
+		s2=substr( rem, pos+2) ;
+		#print pos ;
+		#print s1 ;
+		#print s2 ;
+		#print L ;
+		spc=index( s2, " ") ;
+		ver=substr( s2, 1, spc-1) ;
+		s3=substr( s2, spc+1) ;
+		printf(fmt, desc, s1, ver, s3 ) ;
+    				}'
+	matchRCS=1
+}
+
+
+displayRcsDetails_B()
+{
+	#echo "${dat}" | awk -v desc="${desc}" '{ printf("        [%s]   %s\n", desc, $0 ) ; }'
+	#echo "123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+"
+
+	format="         [%s]   %-${max}s  %-4s  %s\n"
+	head -1 ${TMP}.oneitem | 
+	awk -v fmt="${format}" -v desc="${desc}" -v id=\$Id\: '{ 
+		str=index( $0, id) ;
+		rem=substr( $0, str) ;
+		#print rem ;
+		pos=index( rem,",v")+1 ;
+		L=length(rem) ;
+		s1=substr( rem, 1, pos) ; 
+		s2=substr( rem, pos+2) ;
+		#print pos ;
+		#print s1 ;
+		#print s2 ;
+		#print L ;
+		spc=index( s2, " ") ;
+		ver=substr( s2, 1, spc-1) ;
+		s3=substr( s2, spc+1) ;
+		printf(fmt, desc, s1, ver, s3 ) ;
+	}'
+	matchRCS=1
+}
+
+
+printDetailsNoName()
+{
+	testor3=`echo "${dat}" | awk '{ if ( index($0,"Id: \$") > 0 ) print $0 ; }' `
+
+	desc="EDIT"
+	if [ -z "${testor3}" ] ; then  
+		if [ -n "${dat}" ]
+		then
+			desc="${desc},MALFORMED_HEADER"
+		else
+			desc="${desc},NO_RCShead"
+		fi
+	fi
+	echo "${file}" |
+		awk -v desc="${desc}" '{
+			printf("  [%s,NO_RCS]   %s\n", desc, $0 ) ;
+		}' >>${TMP}.nomatch
+	noMatch="${noMatch} ${file}"
+}
+
+
 getFileRCSdetails()
 {
 	#dat=`grep 'Id: ' ${file} | grep '^#' `
@@ -48,7 +126,10 @@ getFileRCSdetails()
 	then
 		if [ ${names} -eq 0 ]
 		then
-			if [ -t 1 -a ${showAll} -eq 1 ] ; then  echo "\n\t >>> ${file} <<<" ; fi
+			if [ -t 1 -a ${showAll} -eq 1 ]
+			then
+				echo "\n\t >>> ${file} <<<"
+			fi
 		fi
 
 		testor=`echo "${dat}" | awk '{ if ( index($0,"Exp \$") > 0 ) print $0 ; }' `
@@ -65,63 +146,22 @@ getFileRCSdetails()
 				then
 					echo "${file}"
 				else
-					#  [EDIT]         ###	$Id: CODING__CheckRCSnames.sh,v 1.15 2020/09/14 22:16:13 root Exp root $
-					#echo "123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+"
-					#echo "${dat}" | awk -v desc="${desc}" '{ printf("  [%s]         %s\n", desc, $0 ) ; }'
-					format="  [%s]          %-${max}s  %-4s  %s\n"
-					head -1 ${TMP}.oneitem | 
-					awk -v fmt="${format}" -v desc="${desc}" -v id=\$Id\: '{ 
-						str=index( $0, id) ;
-						rem=substr( $0, str) ;
-						#print rem ;
-						pos=index( rem,",v")+1 ;
-						L=length(rem) ;
-						s1=substr( rem, 1, pos) ; 
-						s2=substr( rem, pos+2) ;
-						#print pos ;
-						#print s1 ;
-						#print s2 ;
-						#print L ;
-						spc=index( s2, " ") ;
-						ver=substr( s2, 1, spc-1) ;
-						s3=substr( s2, spc+1) ;
-						printf(fmt, desc, s1, ver, s3 ) ;
-	       				}'
-					matchRCS=1
+					displayRcsDetails_A
 				fi
 			fi
 		else
 			if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) -a \( ${norcs} -eq 0 \) ]
 			then
-				#echo "${dat}" | awk -v desc="${desc}" '{ printf("        [%s]   %s\n", desc, $0 ) ; }'
-				#echo "123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+"
-
-				format="         [%s]   %-${max}s  %-4s  %s\n"
-				head -1 ${TMP}.oneitem | 
-				awk -v fmt="${format}" -v desc="${desc}" -v id=\$Id\: '{ 
-					str=index( $0, id) ;
-					rem=substr( $0, str) ;
-					#print rem ;
-					pos=index( rem,",v")+1 ;
-					L=length(rem) ;
-					s1=substr( rem, 1, pos) ; 
-					s2=substr( rem, pos+2) ;
-					#print pos ;
-					#print s1 ;
-					#print s2 ;
-					#print L ;
-					spc=index( s2, " ") ;
-					ver=substr( s2, 1, spc-1) ;
-					s3=substr( s2, spc+1) ;
-					printf(fmt, desc, s1, ver, s3 ) ;
-	       			}'
-				matchRCS=1
+				displayRcsDetails_B
 			fi
 		fi
 
 		if [ \( ${names} -eq 0 \) -a \( ${norcs} -eq 0 \) ]
 		then
-			if [ ${showAll} -eq 1 ] ; then  grep 'Id: ' ${target} | grep '^#' | awk '{ printf("   [RCS]   %s\n", $0 ) ; }' ; fi
+			if [ ${showAll} -eq 1 ]
+			then
+				grep 'Id: ' ${target} | grep '^#' | awk '{ printf("   [RCS]   %s\n", $0 ) ; }'
+			fi
 		fi
 	else
 		if [ ${norcs} -eq 1 ]
@@ -130,26 +170,12 @@ getFileRCSdetails()
 			then
 				echo "${file}" >>${TMP}.nomatch
 			else
-				testor3=`echo "${dat}" | awk '{ if ( index($0,"Id: \$") > 0 ) print $0 ; }' `
-
-				desc="EDIT"
-				if [ -z "${testor3}" ] ; then  
-					if [ -n "${dat}" ] ; then  desc="${desc},MALFORMED_HEADER" ; else  desc="${desc},NO_RCShead" ; fi
-				fi
-				echo "${file}" | awk -v desc="${desc}" '{ printf("  [%s,NO_RCS]   %s\n", desc, $0 ) ; }' >>${TMP}.nomatch
-				noMatch="${noMatch} ${file}"
+				printDetailsNoName
 			fi
 		else
 			if [ ${names} -eq 0 ]
 			then
-				testor3=`echo "${dat}" | awk '{ if ( index($0,"Id: \$") > 0 ) print $0 ; }' `
-
-				desc="EDIT"
-				if [ -z "${testor3}" ] ; then  
-					if [ -n "${dat}" ] ; then  desc="${desc},MALFORMED_HEADER" ; else  desc="${desc},NO_RCShead" ; fi
-				fi
-				echo "${file}" | awk -v desc="${desc}" '{ printf("  [%s,NO_RCS]   %s\n", desc, $0 ) ; }' >>${TMP}.nomatch
-				noMatch="${noMatch} ${file}"
+				printDetailsNoName
 			fi
 		fi
 	fi
@@ -160,92 +186,94 @@ getFileRCSdetails()
 
 group_2()
 {
-		if [ -s ${TMP}.report ]
+	if [ -s ${TMP}.report ]
+	then
+		#[exec]   $Id: CODING__CheckRCSnames.sh,v 1.16 2024/09/07 16:44:41 root Exp root $
+		if [ ${doSort} -eq 1 ]
 		then
-			#[exec]   $Id: CODING__CheckRCSnames.sh,v 1.15 2020/09/14 22:16:13 root Exp root $
-			if [ ${doSort} -eq 1 ]
+			if [ ${doCoder} -eq 1 ]
 			then
-				if [ ${doCoder} -eq 1 ]
-				then
-					sort --key=7,7 --key=5,5 --key=6,6 ${TMP}.report
-				else
-					sort --key=5,5 --key=6,6 ${TMP}.report
-				fi
+				sort --key=7,7 --key=5,5 --key=6,6 ${TMP}.report
 			else
-				cat ${TMP}.report
+				sort --key=5,5 --key=6,6 ${TMP}.report
+			fi
+		else
+			cat ${TMP}.report
+		fi
+	fi
+
+	if [ ${norcs} -eq 1 ]
+	then
+		if [ -s ${TMP}.nomatch ]
+		then  
+			cat ${TMP}.nomatch
+			if [ ${names} -eq 0 ] 
+			then
+				echo ""
 			fi
 		fi
-
-		if [ ${norcs} -eq 1 ]
+	else
+		if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ] 
 		then
 			if [ -s ${TMP}.nomatch ]
 			then  
-				cat ${TMP}.nomatch
-				if [ ${names} -eq 0 ] 
+				if [ ${matchRCS} -eq 1 ]
 				then
 					echo ""
 				fi
-			fi
-		else
-			if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ] 
-			then
-				if [ -s ${TMP}.nomatch ]
-				then  
-					if [ ${matchRCS} -eq 1 ]
-					then
-						echo ""
-					fi
-					cat ${TMP}.nomatch
-					echo ""
-				fi
+				cat ${TMP}.nomatch
+				echo ""
 			fi
 		fi
+	fi
 }	#group_2()
+
 
 group_1a()
 {
-		rm -f ${TMP}.nomatch
+	rm -f ${TMP}.nomatch
 
-		max=0
-		for file in `cat ${TMP}.todo `
-		do
-			len=`echo "${file}" | wc -c `
-			if [ ${len} -gt ${max} ]
-			then
-				max=${len}
-			fi
-			#echo "${len}  ${file}"
-		done	# | sort -nr
-		max=`expr ${max} + 2 + 6 `
+	max=0
+	for file in `cat ${TMP}.todo `
+	do
+		len=`echo "${file}" | wc -c `
+		if [ ${len} -gt ${max} ]
+		then
+			max=${len}
+		fi
+		#echo "${len}  ${file}"
+	done	# | sort -nr
+	max=`expr ${max} + 2 + 6 `
 
-		matchRCS=0
-		for file in `cat ${TMP}.todo `
-		do
-			getFileRCSdetails
-		done	#file
+	matchRCS=0
+	for file in `cat ${TMP}.todo `
+	do
+		getFileRCSdetails
+	done	#file
 }	#group_1a()
+
 
 group_1b()
 {
-		rm -f ${TMP}.nomatch
+	rm -f ${TMP}.nomatch
 
-		max=0
-		for file in `cat ${TMP}.todo `
-		do
-			len=`echo "${file}" | wc -c `
-			if [ ${len} -gt ${max} ]
-			then
-				max=${len}
-			fi
-			#echo "${len}  ${file}"
-		done	# | sort -nr
-		max=`expr ${max} + 2 + 6 `
+	max=0
+	for file in `cat ${TMP}.todo `
+	do
+		len=`echo "${file}" | wc -c `
+		if [ ${len} -gt ${max} ]
+		then
+			max=${len}
+		fi
+		#echo "${len}  ${file}"
+	done	# | sort -nr
+	max=`expr ${max} + 2 + 6 `
 
-		for file in `cat ${TMP}.todo `
-		do
-			matchRCS=0
-			getFileRCSdetails
-		done	#file
+	for file in `cat ${TMP}.todo `
+	do
+		matchRCS=0
+		getFileRCSdetails
+	done	#file
 }	#group_1b()
 
 
@@ -257,7 +285,11 @@ fileTypeActions()
 
 	if [ -s ${TMP}.todo ]
 	then
-		if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ] ; then  echo "\n####################################################################################\n Examining *.${ftypes} ...\n" ; fi
+		if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ]
+		then
+			echo "\n${divider}${divider}"
+			echo   " Examining *.${ftypes} ...\n"
+		fi
 
 		rm -f ${TMP}.report
 		group_1a >${TMP}.report
@@ -288,13 +320,18 @@ do
 	if [ ! -d "${file}" ]
 	then echo "${file}"
 	fi
-done <${TMP}.all | grep -v '.ods$' | grep -v '.odt$' | grep -v '.txt$' | grep -v '.sh$' | awk '{ if ( NF >0 ){ print $0 } ; }' >${TMP}.todo
+done <${TMP}.all | grep -v '.ods$' | grep -v '.odt$' | grep -v '.txt$' | grep -v '.sh$' |
+	awk '{ if ( NF >0 ){ print $0 } ; }' >${TMP}.todo
 
 if [ -s ${TMP}.todo ]
 then
 	if [ ${norcs} -eq 1 ]
 	then
-		if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ] ; then  echo "\n####################################################################################\n Examining other files of remaining types ...\n" ; fi
+		if [ \( ${names} -eq 0 \) -a \( ${mods} -eq 0 \) ]
+		then
+			echo "\n${divider}${divider}"
+			echo   " Examining other files of remaining types ...\n"
+		fi
 		rm -f ${TMP}.report
 		group_1b >${TMP}.report
 
@@ -302,7 +339,11 @@ then
 	else
 		if [ ${names} -eq 0 ]
 		then
-			if [ ${mods} -eq 0 ] ; then  echo "\n####################################################################################\n Examining other files of remaining types ...\n" ; fi
+			if [ ${mods} -eq 0 ]
+			then
+				echo "\n${divider}${divider}"
+				echo   " Examining other files of remaining types ...\n"
+			fi
 			rm -f ${TMP}.report
 			group_1b >${TMP}.report
 
