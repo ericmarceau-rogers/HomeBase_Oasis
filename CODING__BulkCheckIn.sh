@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###	$Id: CODING__BulkCheckIn.sh,v 1.2 2020/09/02 23:31:19 root Exp $
+###	$Id: CODING__BulkCheckIn.sh,v 1.3 2024/09/07 16:47:04 root Exp root $
 ###
 ###	Scipt to simplify mass check-in of coding files which were checked-out with lock.
 ###
