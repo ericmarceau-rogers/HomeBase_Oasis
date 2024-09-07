@@ -3,28 +3,19 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###	$Id: CODING__ConfirmVariableDefinitions.sh,v 1.3 2020/08/18 01:58:21 root Exp $
+###	$Id: CODING__ConfirmVariableDefinitions.sh,v 1.4 2024/09/07 19:45:20 root Exp root $
 ###
 ###	This script will scan scripts to identify variables defined using the form ${*} and verify that value assignment statements exist.
 ###
 ####################################################################################################
 
-TMP=/tmp/`basename "$0" ".sh" `.tmp
-rm -f ${TMP}
+scanVariables()
+{
+echo "Doing '${INPUT}' ..."
+rm -f "${TMP}"
+rm -f "${TMP}.fail"
 
-verbose=0
-while [ $# -gt 0 ]
-do
-	case $1 in
-		--verbose ) verbose=1 ; shift ;;
-		--script )  INPUT="$2" ; shift ; shift ;;
-		* ) echo "\n\t Invalid parameter '$*' used on command line.  Only option available is '--verbose'.\n Bye!\n" ; exit 1 ;;
-	esac
-done
-
-echo "Doing $INPUT ..."
-
-grep -v '^#' ${INPUT} |
+grep -v '^#' "${INPUT}" |
 awk -v vSTRT='${' -v vEND='}' -v vLTRL="='" '{
 	remSTR=$0 ;
 	Spos=index(remSTR, vSTRT ) ;
@@ -65,21 +56,21 @@ awk -v vSTRT='${' -v vEND='}' -v vLTRL="='" '{
 		remSTR=substr(endSTR, Epos+1 ) ;
 		Spos=index(remSTR, vSTRT ) ;
 	} ;
-}' | sort | uniq >${TMP}
+}' | sort | uniq | grep -v '^[0-9]*$' >"${TMP}"		### exclude references to positional parameters
 
-if [ -s ${TMP} ]
+if [ -s "${TMP}" ]
 then
 	if [ ${verbose} -eq 1 ]
 	then
 		echo "\nVariable identified in script:" >&2
-		awk '{ printf("\t%s\n", $0 ) ; }' ${TMP}
+		awk '{ printf("\t%s\n", $0 ) ; }' "${TMP}"
 		echo "" >&2
 	fi
 
 	FAIL=0
 
-	rm -f ${TMP}.fail
-	for var in `cat ${TMP} `
+	rm -f "${TMP}.fail"
+	for var in `cat "${TMP}"`
 	do
 		testPass=0
 
@@ -106,16 +97,55 @@ then
 			echo "\tMISSING value assignment to variable: '${var}'"
 			FAIL=1
 		fi
-	done >${TMP}.fail
+	done >"${TMP}.fail"
 
 	if [ ${FAIL} -eq 1 ]
 	then
-		echo "\tVariable parsing FAILED for following cases:" >&2 ; cat ${TMP}.fail >&2 ; exit 1
+		echo "\tVariable parsing FAILED for following cases:" >&2 ; cat "${TMP}.fail" >&2 ; exit 1
 	else
 		echo "\tVariable parsing PASSED!\n" >&2 ; exit 0
 	fi
 else
 	echo "\tNo variables used in script." >&2 ; exit 0
+fi
+}
+
+
+
+TMP=/tmp/$$.`basename "$0" ".sh" `.tmp
+
+doAll=0
+verbose=0
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+		--verbose ) verbose=1 ; shift ;;
+		--script )  INPUT="$2" ; shift ; shift ;;
+		--all ) doAll=1 ; shift ;;
+		* ) echo "\n\t Invalid parameter '$*' used on command line.  Only option available is '--verbose'.\n Bye!\n" ; exit 1 ;;
+	esac
+done
+
+if [ ${doAll} -eq 0 ]
+then
+	test -n "${INPUT}" || { echo "\n\t ERROR:  Need name of script to be provided using '--script' option. \n Bye!\n" ; exit 1 ; }
+	scanVariables
+else
+	rm -f "${TMP}.scripts}"
+	ls | grep '\.sh$' >"${TMP}.scripts"
+	ls -l "${TMP}.scripts}"
+
+	test -s "${TMP}.scripts" || { echo "\n\t No *.sh script files in current directory.\n Bye!\n" ; exit 0 ; }
+
+	while [ true ]
+	do
+		read INPUT
+		test -n "${INPUT}" || { echo "\n\t Done!\n" ; exit 0 ; }
+
+		echo "\n=============================================================================================="
+		${0} --script "${INPUT}"
+	done <"${TMP}.scripts"
 fi
 
 
