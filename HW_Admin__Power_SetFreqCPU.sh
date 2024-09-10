@@ -209,7 +209,7 @@ setGovernor()
 	###	Set CPU frequency under USER-defined control
 	COM="${command} --cpu 'all' frequency-set --governor '${governor}'"
 	printf "\n COMMAND:  ${COM}\n"
-	#eval ${COM}
+	eval ${COM}
 }
 
 
@@ -226,7 +226,7 @@ setFrequency()
 	###	Can ONLY set frequency by itself; no other parameters allowed
 	COM="${command} --cpu 'all' frequency-set --freq '${frequency}'"
 	printf "\n COMMAND:  ${COM}\n"
-	#eval ${COM}
+	eval ${COM}
 }
 
 
