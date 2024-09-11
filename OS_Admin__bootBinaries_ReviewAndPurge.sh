@@ -3,7 +3,7 @@
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
 ####################################################################################################
 ###
-###	$Id: OS_Admin__bootBinaries_ReviewAndPurge.sh,v 1.1 2020/09/17 03:11:42 root Exp $
+###	$Id: OS_Admin__bootBinaries_ReviewAndPurge.sh,v 1.1 2020/09/17 03:11:42 root Exp root $
 ###
 ###	Script to identify OS build versions that are installed and purge all except the last 2.
 ###
@@ -68,9 +68,9 @@ do
 	echo "\t Getting versions of  '${pref} ..."
 	rm -f ${TMP}.${pref}.v
 
-	( ls ${pref}-*-${mode} >${TMP}.${pref}.all ) 2>&1 | awk '{ printf("\t\t %s\n", $0 ) }'
-	#cat ${TMP}.${pref}.all | cut -f2-3 -d\- | sort -r --version-sort >${TMP}.${pref}.v
-	cat ${TMP}.${pref}.all | cut -f2-3 -d\- | sort -r >${TMP}.${pref}.v
+	( ls ${pref}-*-${mode} | sort -n >${TMP}.${pref}.all ) 2>&1 | awk '{ printf("\t\t %s\n", $0 ) }'
+	#cat ${TMP}.${pref}.all | cut -f2-3 -d\- | sort -nr --version-sort >${TMP}.${pref}.v
+	cat ${TMP}.${pref}.all | cut -f2-3 -d\- | sort -nr --key=2.1,3.0 --field-separator="-" >${TMP}.${pref}.v
 done
 
 echo""
@@ -167,6 +167,7 @@ then
 	tail -n +3 ${TMP}.vmlinuz.v | sort |
 	while read version
 	do
+		echo "\n\n Boot-related files for ${version} KERNEL:\n"
 		ls -l *-${version}-${mode} 2>&1 | awk '{ printf("\t\t %s\n", $0 ) }'
 
 		echo "\n\n Packages related to ${version} KERNEL:\n"
@@ -258,3 +259,5 @@ echo "\n Bye!\n"
 exit 0
 exit 0
 exit 0
+
+
