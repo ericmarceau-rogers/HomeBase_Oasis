@@ -185,7 +185,7 @@ case "${locn}" in
 		;;
 	"ll" )
 		### option for bottom left corner
-		timePosn="x=${margin}:y=(h-text_h-${margin}-${size})"
+		timePosn="x=${margin}:y=(h-text_h-${margin})"
 		;;
 	"ur" )
 		### option for upper right corner
@@ -193,7 +193,7 @@ case "${locn}" in
 		;;
 	"lr" )
 		### option for bottom right corner
-		timePosn="x=(w-text_w-${margin}):y=(h-text_h-${margin}-${size})"
+		timePosn="x=(w-text_w-${margin}):y=(h-text_h-${margin})"
 		;;
 	* ) printf "\n\t Invalid parameter used on command line. \n\t Only valid options for "--posn" :  ul | bl | ur | br  \n Bye!\n\n" ; exit 1
 esac
