@@ -201,7 +201,7 @@ esac
 #timeFmt="text='\\%T'"
 timeFmt="text='\\%{localtime}'"
 
-textOverlayParameters="drawtext=${fontSpec}:${timeFmt}:${fontClr}:${timePosn}"
+textOverlayParameters="drawtext=${bkgd_toggle}:${bkgd_color}:${bkgd_margin}:${fontSpec}:${timeFmt}:${fontClr}:${timePosn}"
 
 #echo ${textOverlayParameters}
 #exit
