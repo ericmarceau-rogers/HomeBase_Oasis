@@ -183,7 +183,7 @@ case "${locn}" in
 		### default
 		timePosn="x=${margin}:y=${margin}"
 		;;
-	"bl" )
+	"ll" )
 		### option for bottom left corner
 		timePosn="x=${margin}:y=(h-text_h-${margin}-${size})"
 		;;
@@ -191,7 +191,7 @@ case "${locn}" in
 		### option for upper right corner
 		timePosn="x=(w-text_w-${margin}):y=${margin}"
 		;;
-	"br" )
+	"lr" )
 		### option for bottom right corner
 		timePosn="x=(w-text_w-${margin}):y=(h-text_h-${margin}-${size})"
 		;;
