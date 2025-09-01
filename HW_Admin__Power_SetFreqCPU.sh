@@ -4,7 +4,9 @@
 ###
 ###	Script to make it easier to learn how to control the CPU 'governor' and CPU clock frequencies
 ###
-###	Version 4.0
+###	2024-11-18  --  Version 5.1  --  Eric Marceau, Ottawa, Ontario, Canada
+###
+### Related discussion:  https://ubuntu-mate.community/t/setting-up-boot-time-service-for-local-custom-cpu-frequency-governor-script-cpupower/28349
 ###
 ####################################################################################################
 #23456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+123456789+
@@ -16,9 +18,12 @@ test "${1}" = "--debug2" && { dbg=2 ; shift ; }
 ###
 ###	Edit this script to assign preset defaults appropriate for your local Desktop CPU
 ###
-doMode=99	# userspace
+doMode=59	# userspace
 doFreq=2	# 1900MHz
 doDefault=0
+doStatus=0
+doCron=0
+doService=0
 
 shopt -s extglob
 
@@ -90,8 +95,8 @@ getGov()
 		 3 ) governor="powersave"	;;
 		 4 ) governor="ondemand"	;;
 		 5 ) governor="schedutil"	;;
-		98 ) ;;				### governor specified on command line
-		99 ) governor="userspace"	;;
+		58 ) ;;				### governor specified on command line
+		59 ) governor="userspace"	;;
 	esac
 }
 
@@ -122,7 +127,10 @@ getFreq()
 	esac
 
 	fmax=$(echo "${steps}" | head -1 )
+	fmidhi=$(echo "${steps}" | head -2 | tail -1 )
+	fmidlo=$(echo "${steps}" | tail -2 | head -1 )
 	fmin=$(echo "${steps}" | tail -1 )
+
 	test -n "${fmin}" || fmin=$(echo "${steps}" | tail -2 | head -1 )
 
 	fopt=( $(echo ${steps} ) )
@@ -133,19 +141,22 @@ getFreq()
 	test ${dbg} -gt 1 && echo "doFreq = ${doFreq}" >&2
 	case ${doFreq} in
 		#(!+[0-9]) ) frequency="NULL" ;;
-		97 )
+		80 )
 			case "${frequency}" in
 				+([0-9])"MHz" ) ;;
 				#[0-9]"."+([0-9])"GHz" | [0-9]"."[0-9][0-9]"GHz" )
 				[0-9]"."+([0-9])"GHz" )
 					fval=$(echo "${frequency}" | sed 's+GHz++' )
-					#fval=$(echo "scale=0 ; 1000 * ${fval}" | bc )
-					fval=$(echo "1000 * ${fval}" | bc | cut -f1 -d\. )
+					#fval=$(echo "scale=0 ; 1000 * ${fval}" | bc )		### This form doesn't work
+					#fval=$(echo "1000 * ${fval}" | bc | cut -f1 -d\. )	### Kludgy fix
+					fval=$(echo "1000 * ${fval}" / 1 | bc )			### Elegant fix
 					frequency="${fval}MHz"
 					;;
 			esac
 			return ;;
-		98 )	frequency="${fmin}" ; return ;;
+		96 )	frequency="${fmin}" ; return ;;
+		97 )	frequency="${fmidlo}" ; return ;;
+		98 )	frequency="${fmidhi}" ; return ;;
 		99 )	frequency="${fmax}" ; return ;;
 		+([0-9]) )
 			test ${doFreq} -gt ${len} && { printf "\n\t ERROR:  User has specified frequncy index which is out of range.  Max positional choices = 4.\n Bye!\n\n" ; exit 1 ; }
@@ -230,11 +241,28 @@ setFrequency()
 }
 
 
+reportStatus()
+{
+	now=$( date '+%Y-%m-%d %H:%M:%S' )
+	for cpu in 0 1 2 3
+	do
+		fmax=$(cat /sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_max_freq )
+		fmin=$(cat /sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_min_freq )
+
+		govr=$(cat /sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_governor )
+		freq=$(cat /sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_cur_freq )
+
+		printf "${now}|  CPU ${cpu}:  %s  %4s MHz [%s <-> %s]\n"  ${govr}  $( expr ${freq} / 1000 )  $( expr ${fmin} / 1000 )  $( expr ${fmax} / 1000 )  
+	done
+}
+
+
+
 command=$(which "cpupower" )
 test -n "${command}" || { printf "\n ERROR: Unable to locate command 'cpupower'.  Unable to proceed.\n\n" ; exit 1 ; } 
 
 
-tmp=$(basename "$0" ".sh" ).report
+tmp=/tmp/$(basename "$0" ".sh" ).report
 
 
 ### get details report to parse for available governor labels and CPU frequencies
@@ -264,7 +292,7 @@ do
 		"--detail" )
 			${command} frequency-info --debug ; echo "" ; exit 0 ;;
 		"--mode" )
-			doMode=98 ;
+			doMode=58 ;
 			governor="${2}" ; shift ; shift ;;
 		"--max" )
 			doMode=1 ; shift ;;
@@ -277,23 +305,49 @@ do
 		"--adaptive" )
 			doMode=5 ; shift ;;
 		"--freq" )
-			doMode=99 ;
-			doFreq=97 ;
+			doMode=59 ;
+			doFreq=80 ;
 			frequency="${2}" ; shift ; shift ;;
 		"--fmax" )
 			doFreq=99 ; shift ;;
-		"--fmin" )
+		"--fmidhi" )
 			doFreq=98 ; shift ;;
+		"--fmidlo" )
+			doFreq=97 ; shift ;;
+		"--fmin" )
+			doFreq=96 ; shift ;;
 		"--f"+([0-9]) )
 			doFreq=$(echo "$1" | cut -c4- ) ; shift ;;
 		"--default" )
 			doDefault=1 ; shift ;;
+		"--status" )
+			doStatus=1 ; shift ;;
+		"--cron" )
+			doCron=1 ; shift ;;
+		"--service" )
+			doService=1 ; shift ;;
 		* )
 			echo "ERROR:  Invalid argument '${1}' on command line." ; exit 1 ;;
 	esac
 done
 
 test ${dbg} -gt 0 && echo "	>>> END  parsing ..." >&2
+
+if [ ${doService} -eq 1 ]
+then
+	rm -f /var/log/cpufreq.log
+fi
+
+if [ ${doStatus} -eq 1 ]
+then
+	if [ ${doCron} -eq 1 ]
+	then
+		{ reportStatus ; echo "" ; } >>/var/log/cpufreq.log
+	else
+		reportStatus
+	fi
+	exit
+fi
 
 getGov
 
@@ -315,3 +369,7 @@ then
 fi
 
 echo ""
+
+test ${doService} -eq 0 && rm -i ${tmp}
+
+exit 0
