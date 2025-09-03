@@ -2,7 +2,7 @@
 
 ####################################################################################################
 ###
-###	$Id: quickRSYNC.sh,v 1.7 2024/05/22 21:38:34 root Exp root $
+###	$Id: quickRSYNC.sh,v 1.8 2024/07/18 02:56:26 root Exp root $
 ###
 ###	Simplified version of 'rsync' backup without the additional post-backup tasks that are performed by 'OS_Admin__partitionSecondary_Mirror.sh'.
 ###
@@ -25,23 +25,26 @@ buildBatch()
 
 	##	--delete-delay \
 	##	--delete-after \
+	##	--crtimes \
 	COM="ionice -c 2 -n 7 rsync \
 		${limitThruput} \
 		${doUpdate} \
 		${doCheckSum} \
 		${showProgress} \
 		--one-file-system \
-		--recursive \
 		--outbuf=Line \
+		--recursive \
+		--delete-during \
+		--preallocate \
 		--links \
 		--perms \
 		--times \
 		--group \
 		--owner \
+		--atimes \
 		--devices \
 		--specials \
 		--verbose --out-format=\"%t|%i|%M|%b|%f|\" \
-		--delete-during \
 		--whole-file \
 		--human-readable \
 		--protect-args \
@@ -123,6 +126,8 @@ limitBandwidth()
 		# Timing O_DIRECT cached reads:    64 MB in  2.04 seconds =  31.35 MB/sec
 		# Timing O_DIRECT disk reads:  98 MB in  3.06 seconds =  32.04 KB/sec
 		echo "backDev = ${backDev}"
+
+####  cat /dev/zero | pv > ${there}/junker
 
 		devTest=`hdparm -Tt --direct ${backDev} `
 		echo "${devTest}\n"
@@ -244,16 +249,23 @@ case ${thisHost} in
 		indent="              "
 		mirrorGroup=5
 		;;
-	OasisMega2 )
-		#OasisMini | OasisMidi )
-		#PathMaster="${MROOT}/"
-		#indent="        "
-		PathMaster="/"
-		indent="              "
-		mirrorGroup=6
-		;;
+#	OasisMega2 )
+#		#OasisMini | OasisMidi )
+#		#PathMaster="${MROOT}/"
+#		#indent="        "
+#		PathMaster="/"
+#		indent="              "
+#		mirrorGroup=7		### 7 used to avoid accidental cloberring of masterPart==8
+#		;;
 	* )	echo "\n\t This script is NOT to be used from this host. \n Bye!\n" ; exit 1 ;;
 esac
+
+
+testBK=`lsblk | grep 'disk' | grep '3.6T' `
+if [ -z "${testBK}" ]
+then
+	echo "\n\t 4TB MyBook USB Drive is OFFLINE!  Unable to proceed.\n Bye!\n" ; exit 1
+fi
 
 echo "\n\t Following block devices have been identified:\n"
 lsblk -l | awk '{ if( length($1) == 3 ){ print $0 } ; }' | awk '{ printf("\t\t %s\n", $0 ) ; }'
@@ -264,20 +276,31 @@ STRT=`pwd`
 ###
 ###	Values in list for 'masterPart' must be edited to suit the source device being backed up.
 ###
-EXCLUDES=' --exclude=\"./cdrom/*\" --exclude=\"./dev/*\" --exclude=\"./lost+found/*\" --exclude=\"./media/*/*\" --exclude=\"./mnt/*\" --exclude=\"./proc/*\" --exclude=\"./run/*\" --exclude=\"./site/*/*\" --exclude=\"./sys/*\" --exclude=\"./tmp/*\" '
+EXCLUDES=' --exclude=\"./cdrom/*\" --exclude=\"./dev/*\" --exclude=\"./lost+found/*\" --exclude=\"./media/*/*\" --exclude=\"./mnt/*\" --exclude=\"./mtp/*\" --exclude=\"./proc/*\" --exclude=\"./run/*\" --exclude=\"./site/*/*\" --exclude=\"./sys/*\" --exclude=\"./tmp/*\" '
+
 
 first=1
-for masterPart in 1 2 3 4 5 6 7
+for masterPart in 1 2 3 4 5 6 7 8
 do
 	dirC=DB001_F${masterPart}
 
 	case ${masterPart} in
 		1 )	case ${thisHost} in
 				OasisMega1 )	mirrorPart=8 ;;
-				OasisMega2 )	mirrorPart=1 ;;
+				#OasisMega2 )	mirrorPart=9 ;;		# 9 assigned to avoid clobbering OasisMidi
+				* )	echo "\n\t Backup for this host is not configured.\n" ; exit 1 ;;
 			esac
 			;;
-		* )	mirrorPart=${masterPart}
+		* )	
+			case ${masterPart} in
+				2 | 3 | 4 | 5 | 6 | 7 )	mirrorPart=${masterPart} ;;
+				8 )	if [ ${thisHost} = "OasisMega1" ]
+					then
+						mirrorGroup=6
+						mirrorPart=1
+					fi
+					;;
+			esac
 			EXCLUDES=""
 			;;
 	esac
@@ -475,4 +498,3 @@ done
 exit 0
 exit 0
 exit 0
-
